@@ -1,0 +1,57 @@
+version: '3'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: backend
+    networks:
+      - app-network
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./back/.production.env
+    depends_on:
+      - mongo
+    volumes:
+      - backend_static:/usr/src/app/static
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: frontend
+    networks:
+      - app-network
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./front/.env.local
+    depends_on:
+      - backend
+    volumes:
+      - frontend_build:/usr/src/app/build
+
+volumes:
+  mongo_data:
+    driver: local
+  backend_static:
+    driver: local
+  frontend_build:
+    driver: local
+
