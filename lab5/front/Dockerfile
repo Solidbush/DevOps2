@@ -1,19 +1,22 @@
-FROM node:alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git \
+    && git clone --depth 1 https://gitlab.com/deusops/projects/react-spring-app.git /repo \
+    && mv /repo/react-frontend/* /app/ \
+    && rm -rf /repo
 
-RUN git clone --depth 1 https://gitlab.com/deusops/projects/react-spring-app.git /app/repo \
-    && mv /app/repo/react-frontend/* /app/ \
-    && rm -rf /app/repo \
-    && apk del git
+ENV PUBLIC_URL=/
 
-RUN ls -la package.json package-lock.json
+RUN npm ci && npm run build
 
-RUN npm ci \
-    && npm cache clean --force
+FROM nginx:alpine
 
-USER node
+COPY --from=builder /app/build /usr/share/nginx/html
 
-CMD ["npm", "start"]
+RUN chmod -R 755 /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

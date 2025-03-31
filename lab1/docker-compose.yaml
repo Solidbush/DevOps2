@@ -8,6 +8,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./default.conf:/etc/nginx/default.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./html:/var/www/html:ro
     restart: always
